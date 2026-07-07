@@ -99,7 +99,7 @@ registerView('desk', {
       const btn = e.target.querySelector('button[type="submit"]');
       if (btn.disabled) return;
       btn.disabled = true;
-      setTimeout(() => { btn.disabled = false; }, 5000);
+      btn.textContent = 'Отправляю…';
       const f = new FormData(e.target);
       const statusEl = el.querySelector('#status');
       const outEl = el.querySelector('#out');
@@ -118,6 +118,9 @@ registerView('desk', {
         statusEl.textContent = err.message === 'AUTH'
           ? 'Токен перестал работать — перезайдите (кнопка ⎋).'
           : `Ошибка: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Отправить';
       }
     });
   },
