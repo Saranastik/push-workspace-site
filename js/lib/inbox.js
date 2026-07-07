@@ -18,6 +18,14 @@ export function makeRequest(action, text, comment = '', now = new Date()) {
   };
 }
 
+export function parseResultJson(raw) {
+  try {
+    return { ok: true, value: JSON.parse(raw) };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
 const STATUSES = ['ok', 'error'];
 
 export function validateResult(o) {

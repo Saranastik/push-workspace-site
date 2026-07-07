@@ -1,6 +1,6 @@
 import { registerView } from '../registry.js';
 import { CONFIG } from '../config.js';
-import { ACTIONS, makeRequest, validateResult } from '../lib/inbox.js';
+import { ACTIONS, makeRequest, validateResult, parseResultJson } from '../lib/inbox.js';
 
 export function renderResult(el, r) {
   const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
@@ -27,31 +27,53 @@ export function renderResult(el, r) {
   );
 }
 
+export function renderRawFallback(outEl, statusEl, raw, parseError) {
+  statusEl.textContent = `Ответ пришёл, но файл повреждён (${parseError}) — показываю как есть.`;
+  const pre = document.createElement('pre');
+  pre.className = 'raw-fallback';
+  pre.textContent = raw;
+  outEl.innerHTML = '';
+  outEl.appendChild(pre);
+}
+
 async function pollResult(gh, id, statusEl, outEl) {
   const started = Date.now();
   while (Date.now() - started < CONFIG.pollTimeoutMs) {
-    const [result, runs] = await Promise.all([
-      gh.getJson(`results/${id}.json`),
-      gh.latestRuns(1),
-    ]);
-    if (result) {
-      const v = validateResult(result);
-      if (!v.ok) {
-        statusEl.textContent = `Ответ пришёл, но не по формату (${v.error}) — смотрите файл results/${id}.json`;
+    try {
+      const [raw, runs] = await Promise.all([
+        gh.getRaw(`results/${id}.json`),
+        gh.latestRuns(1).catch(() => []),
+      ]);
+      if (raw !== null) {
+        const parsed = parseResultJson(raw);
+        if (!parsed.ok) {
+          renderRawFallback(outEl, statusEl, raw, parsed.error);
+          return;
+        }
+        const v = validateResult(parsed.value);
+        if (!v.ok) {
+          renderRawFallback(outEl, statusEl, raw, v.error);
+          return;
+        }
+        statusEl.textContent = '';
+        renderResult(outEl, parsed.value);
         return;
       }
-      statusEl.textContent = '';
-      renderResult(outEl, result);
-      return;
-    }
-    const run = runs[0];
-    if (run && run.status !== 'completed') {
-      statusEl.textContent = 'Claude работает…';
-    } else if (run && run.conclusion === 'failure') {
-      statusEl.innerHTML = `Обработка упала — <a href="${run.html_url}" target="_blank">лог запуска</a>`;
-      return;
-    } else {
-      statusEl.textContent = 'Запрос в очереди…';
+      const run = runs[0];
+      if (run && run.status !== 'completed') {
+        statusEl.textContent = 'Claude работает…';
+      } else if (run && run.conclusion === 'failure') {
+        statusEl.innerHTML = `Обработка упала — <a href="${run.html_url}" target="_blank">лог запуска</a>`;
+        return;
+      } else {
+        statusEl.textContent = 'Запрос в очереди…';
+      }
+    } catch (err) {
+      if (err.message === 'AUTH') {
+        statusEl.textContent = 'Токен перестал работать — перезайдите (кнопка ⎋).';
+        return;
+      }
+      statusEl.textContent = 'Сбой сети — продолжаю проверять…';
     }
     await new Promise(r => setTimeout(r, CONFIG.pollMs));
   }
@@ -74,6 +96,10 @@ registerView('desk', {
 
     el.querySelector('#ask').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      if (btn.disabled) return;
+      btn.disabled = true;
+      setTimeout(() => { btn.disabled = false; }, 5000);
       const f = new FormData(e.target);
       const statusEl = el.querySelector('#status');
       const outEl = el.querySelector('#out');

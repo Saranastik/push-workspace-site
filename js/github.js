@@ -38,11 +38,6 @@ export class GH {
     return r ? await r.text() : null;
   }
 
-  async getJson(path) {
-    const raw = await this.getRaw(path);
-    return raw === null ? null : JSON.parse(raw);
-  }
-
   async listDir(path) {
     const r = await this.req(this.contents(path, `&t=${Date.now()}`));
     if (!r) return [];

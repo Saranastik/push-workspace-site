@@ -1,6 +1,6 @@
 import { registerView } from '../registry.js';
-import { renderResult } from './desk.js';
-import { validateResult } from '../lib/inbox.js';
+import { renderResult, renderRawFallback } from './desk.js';
+import { validateResult, parseResultJson } from '../lib/inbox.js';
 
 registerView('archive', {
   async mount(el, gh) {
@@ -30,9 +30,18 @@ registerView('archive', {
       e.target.classList.add('active');
       const box = el.querySelector('#session');
       box.innerHTML = '<p>Загрузка…</p>';
-      const r = await gh.getJson(path);
-      if (r && validateResult(r).ok) renderResult(box, r);
-      else box.innerHTML = '<p class="error">Файл повреждён или не по формату.</p>';
+      const raw = await gh.getRaw(path);
+      if (raw === null) { box.innerHTML = '<p class="error">Файл не найден.</p>'; return; }
+      const parsed = parseResultJson(raw);
+      const status = document.createElement('p');
+      if (parsed.ok && validateResult(parsed.value).ok) {
+        renderResult(box, parsed.value);
+      } else {
+        box.innerHTML = '';
+        const out = document.createElement('div');
+        box.append(status, out);
+        renderRawFallback(out, status, raw, parsed.ok ? validateResult(parsed.value).error : parsed.error);
+      }
     });
   },
 });
