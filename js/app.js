@@ -1,8 +1,6 @@
 import { CONFIG } from './config.js';
 import { GH } from './github.js';
-
-const views = {};
-export function registerView(id, view) { views[id] = view; }
+import { views } from './registry.js';
 
 import './views/desk.js';
 import './views/archive.js';
@@ -14,8 +12,11 @@ const $ = (s) => document.querySelector(s);
 let gh = null;
 
 async function tokenOk(token) {
-  try { return (await new GH(token, CONFIG.owner, CONFIG.repo, CONFIG.branch).getRaw('CLAUDE.md')) !== null; }
-  catch { return false; }
+  try {
+    return (await new GH(token, CONFIG.owner, CONFIG.repo, CONFIG.branch).getRaw('CLAUDE.md')) !== null;
+  } catch {
+    return false;
+  }
 }
 
 function show(tab) {
@@ -25,14 +26,19 @@ function show(tab) {
 }
 
 async function boot() {
-  const token = localStorage.getItem('gh_pat');
-  if (token && await tokenOk(token)) {
-    gh = new GH(token, CONFIG.owner, CONFIG.repo, CONFIG.branch);
-    $('#gate').classList.add('hidden');
-    $('#shell').classList.remove('hidden');
-    show('desk');
-  } else {
-    localStorage.removeItem('gh_pat');
+  try {
+    const token = localStorage.getItem('gh_pat');
+    if (token && await tokenOk(token)) {
+      gh = new GH(token, CONFIG.owner, CONFIG.repo, CONFIG.branch);
+      $('#gate').classList.add('hidden');
+      $('#shell').classList.remove('hidden');
+      show('desk');
+    } else {
+      localStorage.removeItem('gh_pat');
+      $('#shell').classList.add('hidden');
+      $('#gate').classList.remove('hidden');
+    }
+  } catch {
     $('#shell').classList.add('hidden');
     $('#gate').classList.remove('hidden');
   }

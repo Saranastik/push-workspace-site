@@ -1,4 +1,4 @@
-import { registerView } from '../app.js';
+import { registerView } from '../registry.js';
 import { parseHistory, monthlyStats, topByCtr } from '../lib/history.js';
 
 function esc(s) {

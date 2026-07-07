@@ -1,4 +1,4 @@
-import { registerView } from '../app.js';
+import { registerView } from '../registry.js';
 import { CONFIG } from '../config.js';
 import { ACTIONS, makeRequest, validateResult } from '../lib/inbox.js';
 

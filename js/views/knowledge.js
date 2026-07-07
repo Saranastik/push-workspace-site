@@ -1,4 +1,4 @@
-import { registerView } from '../app.js';
+import { registerView } from '../registry.js';
 
 const DOCS = [
   ['Стайлгайд',       'Пуши/Стайлгайд.md'],

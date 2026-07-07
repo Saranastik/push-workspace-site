@@ -1,4 +1,4 @@
-import { registerView } from '../app.js';
+import { registerView } from '../registry.js';
 import { renderResult } from './desk.js';
 import { validateResult } from '../lib/inbox.js';
 
