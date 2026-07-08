@@ -7,8 +7,9 @@ export function parseHistory(md) {
     if (!line.trim().startsWith('|')) continue;
     const cells = line.split('|').slice(1, -1).map(c => c.trim());
     if (cells.length < 5 || cells[0] === 'Дата' || /^:?-{2,}:?$/.test(cells[0])) continue;
-    const num = (s) => { const n = parseInt(s.replace(/[\s ]/g, ''), 10); return Number.isFinite(n) ? n : null; };
-    const pct = (s) => { const n = parseFloat(s.replace(',', '.').replace('%', '')); return Number.isFinite(n) ? n : null; };
+    const clean = (s) => s.replace(/[*_`]/g, '').trim();
+    const num = (s) => { const n = parseInt(clean(s).replace(/[\s ]/g, ''), 10); return Number.isFinite(n) ? n : null; };
+    const pct = (s) => { const n = parseFloat(clean(s).replace(',', '.').replace('%', '')); return Number.isFinite(n) ? n : null; };
     rows.push({ month, date: cells[0], title: cells[1], text: cells[2], delivered: num(cells[3]), ctr: pct(cells[4]) });
   }
   return rows;
