@@ -1,6 +1,7 @@
 import { registerView } from '../registry.js';
 import { CONFIG } from '../config.js';
 import { ACTIONS, makeRequest, validateResult, parseResultJson } from '../lib/inbox.js';
+import { pageHeader } from '../ui.js';
 
 export function renderResult(el, r) {
   const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
@@ -83,12 +84,22 @@ async function pollResult(gh, id, statusEl, outEl) {
 registerView('desk', {
   mount(el, gh) {
     el.innerHTML = `
+      ${pageHeader('Рабочий стол', 'Отправьте запрос — Claude разберёт его за 2–3 минуты')}
       <form id="ask">
-        <select name="action">
-          ${Object.entries(ACTIONS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
-        </select>
-        <textarea name="text" rows="10" placeholder="Вставьте пуши (каждый с новой строки или через ---) либо опишите задание"></textarea>
-        <input name="comment" placeholder="Комментарий — необязательно">
+        <label class="field">
+          <span>Что сделать</span>
+          <select name="action">
+            ${Object.entries(ACTIONS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+          </select>
+        </label>
+        <label class="field">
+          <span>Задание</span>
+          <textarea name="text" rows="10" placeholder="Вставьте пуши (каждый с новой строки или через ---) либо опишите задание"></textarea>
+        </label>
+        <label class="field">
+          <span>Комментарий (необязательно)</span>
+          <input name="comment" placeholder="Уточнение к заданию">
+        </label>
         <button type="submit">Отправить</button>
       </form>
       <p id="status"></p>

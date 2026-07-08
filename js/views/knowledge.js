@@ -1,4 +1,5 @@
 import { registerView } from '../registry.js';
+import { pageHeader } from '../ui.js';
 
 const DOCS = [
   ['Стайлгайд',       'Пуши/Стайлгайд.md'],
@@ -11,6 +12,7 @@ const DOCS = [
 registerView('knowledge', {
   mount(el, gh) {
     el.innerHTML = `
+      ${pageHeader('База знаний', 'Стайлгайд, правила и аналитика — то, на что опирается Claude')}
       <nav class="subnav">
         ${DOCS.map(([t], i) => `<button data-i="${i}" class="${i === 0 ? 'active' : ''}">${t}</button>`).join('')}
       </nav>

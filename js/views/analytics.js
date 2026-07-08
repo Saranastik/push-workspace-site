@@ -1,11 +1,6 @@
 import { registerView } from '../registry.js';
 import { parseHistory, monthlyStats, topByCtr } from '../lib/history.js';
-
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s ?? '';
-  return d.innerHTML;
-}
+import { pageHeader, esc, ctrClass } from '../ui.js';
 
 registerView('analytics', {
   async mount(el, gh) {
@@ -28,6 +23,7 @@ registerView('analytics', {
     const best = top10[0];
 
     el.innerHTML = `
+      ${pageHeader('Аналитика', 'Цифры по всем рассылкам из базы')}
       <div class="stat-summary">
         <div class="stat-card">
           <div class="label">Всего рассылок</div>
@@ -45,37 +41,37 @@ registerView('analytics', {
       </div>
 
       <div class="chart-wrap">
-        <h3 style="font-size:.95rem;font-weight:600;margin-bottom:14px">Средний CTR по месяцам</h3>
+        <h3 class="section-title">Средний CTR по месяцам</h3>
         <canvas id="ctr-chart" height="100"></canvas>
       </div>
 
-      <h3 style="font-size:.95rem;font-weight:600;margin:20px 0 10px">Топ-10 по CTR</h3>
-      <div style="overflow-x:auto">
-        <table style="border-collapse:collapse;font-size:.85rem;width:100%">
+      <h3 class="section-title" style="margin:20px 0 10px">Топ-10 по CTR</h3>
+      <div class="data-table">
+        <table>
           <thead>
             <tr>
-              <th style="border:1px solid var(--border);padding:6px 10px;background:var(--bg)">CTR</th>
-              <th style="border:1px solid var(--border);padding:6px 10px;background:var(--bg)">Заголовок</th>
-              <th style="border:1px solid var(--border);padding:6px 10px;background:var(--bg)">Текст</th>
-              <th style="border:1px solid var(--border);padding:6px 10px;background:var(--bg)">Доставлено</th>
-              <th style="border:1px solid var(--border);padding:6px 10px;background:var(--bg)">Месяц</th>
+              <th>CTR</th>
+              <th>Заголовок</th>
+              <th>Текст</th>
+              <th>Доставлено</th>
+              <th>Месяц</th>
             </tr>
           </thead>
           <tbody>
             ${top10.map(r => `
               <tr>
-                <td style="border:1px solid var(--border);padding:6px 10px;font-weight:600">${r.ctr.toFixed(1)}%</td>
-                <td style="border:1px solid var(--border);padding:6px 10px">${esc(r.title)}</td>
-                <td style="border:1px solid var(--border);padding:6px 10px">${esc(r.text)}</td>
-                <td style="border:1px solid var(--border);padding:6px 10px">${r.delivered !== null ? r.delivered.toLocaleString('ru-RU') : '—'}</td>
-                <td style="border:1px solid var(--border);padding:6px 10px">${esc(r.month)}</td>
+                <td class="${ctrClass(r.ctr)}" style="white-space:nowrap">${r.ctr.toFixed(1)}%</td>
+                <td>${esc(r.title)}</td>
+                <td>${esc(r.text)}</td>
+                <td style="white-space:nowrap">${r.delivered !== null ? r.delivered.toLocaleString('ru-RU') : '—'}</td>
+                <td style="white-space:nowrap">${esc(r.month)}</td>
               </tr>`).join('')}
           </tbody>
         </table>
       </div>
 
       ${analyticsMd ? `
-        <h3 style="font-size:.95rem;font-weight:600;margin:28px 0 10px">Выводы из базы</h3>
+        <h3 class="section-title" style="margin:28px 0 10px">Выводы из базы</h3>
         <div class="md">${marked.parse(analyticsMd)}</div>
       ` : ''}`;
 

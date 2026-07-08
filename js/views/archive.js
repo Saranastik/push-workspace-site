@@ -1,6 +1,7 @@
 import { registerView } from '../registry.js';
 import { renderResult, renderRawFallback } from './desk.js';
 import { validateResult, parseResultJson } from '../lib/inbox.js';
+import { pageHeader, emptyState } from '../ui.js';
 
 registerView('archive', {
   async mount(el, gh) {
@@ -9,9 +10,14 @@ registerView('archive', {
       .filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep')
       .sort((a, b) => b.name.localeCompare(a.name));
 
-    if (!files.length) { el.innerHTML = '<p>Пока пусто.</p>'; return; }
+    if (!files.length) {
+      el.innerHTML = pageHeader('Архив сессий')
+        + emptyState('Пока пусто', 'Отправьте первый запрос на «Рабочем столе» — ответ появится здесь.');
+      return;
+    }
 
     el.innerHTML = `
+      ${pageHeader('Архив сессий', 'Все ответы Claude — выберите запись')}
       <ul class="sessions">
         ${files.map(f => {
           const label = f.name.replace('.json', '').replace(
