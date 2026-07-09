@@ -26,6 +26,16 @@ export function parseResultJson(raw) {
   }
 }
 
+// Статус обработки конкретного запроса: ищем запуск по id в заголовке
+// коммита («request <id> (…)»), чтобы чужие провалы не прерывали ожидание.
+export function runStateForRequest(runs, id) {
+  const run = (runs || []).find(r => (r.display_title || '').includes(id));
+  if (!run) return { state: 'queued', run: null };
+  if (run.status !== 'completed') return { state: 'working', run };
+  if (run.conclusion === 'failure') return { state: 'failed', run };
+  return { state: 'finished', run };
+}
+
 const STATUSES = ['ok', 'error'];
 
 export function validateResult(o) {

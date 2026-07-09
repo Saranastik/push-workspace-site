@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeRequest, validateResult, parseResultJson } from '../js/lib/inbox.js';
+import { makeRequest, validateResult, parseResultJson, runStateForRequest } from '../js/lib/inbox.js';
 
 test('makeRequest формирует id и путь', () => {
   const r = makeRequest('analyze', 'Заголовок: X', '', new Date('2026-07-08T15:27:00+03:00'));
@@ -37,4 +37,25 @@ test('parseResultJson не бросает исключение на битом J
   const r = parseResultJson(broken);
   assert.equal(r.ok, false);
   assert.equal(typeof r.error, 'string');
+});
+
+test('runStateForRequest игнорирует чужой упавший запуск', () => {
+  // реальный кейс: последний запуск — старый провал, а наш ещё не стартовал
+  const runs = [{ display_title: 'request 20260708-191616 (analyze)', status: 'completed', conclusion: 'failure' }];
+  assert.equal(runStateForRequest(runs, '20260710-120000').state, 'queued');
+});
+
+test('runStateForRequest находит свой запуск по id', () => {
+  const runs = [
+    { display_title: 'request 20260710-120500 (custom)', status: 'in_progress', conclusion: null },
+    { display_title: 'request 20260710-120000 (analyze)', status: 'completed', conclusion: 'failure' },
+  ];
+  assert.equal(runStateForRequest(runs, '20260710-120500').state, 'working');
+  assert.equal(runStateForRequest(runs, '20260710-120000').state, 'failed');
+});
+
+test('runStateForRequest: завершённый успешный запуск и пустой список', () => {
+  const runs = [{ display_title: 'request 20260710-120000 (analyze)', status: 'completed', conclusion: 'success' }];
+  assert.equal(runStateForRequest(runs, '20260710-120000').state, 'finished');
+  assert.equal(runStateForRequest([], '20260710-120000').state, 'queued');
 });

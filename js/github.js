@@ -59,6 +59,6 @@ export class GH {
     const r = await this.req(`/repos/${this.owner}/${this.repo}/actions/runs?per_page=${n}&t=${Date.now()}`);
     if (!r) return [];
     const { workflow_runs = [] } = await r.json();
-    return workflow_runs.map(({ status, conclusion, html_url, created_at }) => ({ status, conclusion, html_url, created_at }));
+    return workflow_runs.map(({ display_title, status, conclusion, html_url, created_at }) => ({ display_title, status, conclusion, html_url, created_at }));
   }
 }

@@ -1,6 +1,6 @@
 import { registerView } from '../registry.js';
 import { CONFIG } from '../config.js';
-import { ACTIONS, makeRequest, validateResult, parseResultJson } from '../lib/inbox.js';
+import { ACTIONS, makeRequest, validateResult, parseResultJson, runStateForRequest } from '../lib/inbox.js';
 import { pageHeader } from '../ui.js';
 
 export function renderResult(el, r) {
@@ -43,7 +43,7 @@ async function pollResult(gh, id, statusEl, outEl) {
     try {
       const [raw, runs] = await Promise.all([
         gh.getRaw(`results/${id}.json`),
-        gh.latestRuns(1).catch(() => []),
+        gh.latestRuns(5).catch(() => []),
       ]);
       if (raw !== null) {
         const parsed = parseResultJson(raw);
@@ -60,12 +60,14 @@ async function pollResult(gh, id, statusEl, outEl) {
         renderResult(outEl, parsed.value);
         return;
       }
-      const run = runs[0];
-      if (run && run.status !== 'completed') {
+      const { state, run } = runStateForRequest(runs, id);
+      if (state === 'working') {
         statusEl.textContent = 'Claude работает…';
-      } else if (run && run.conclusion === 'failure') {
+      } else if (state === 'failed') {
         statusEl.innerHTML = `Обработка упала — <a href="${run.html_url}" target="_blank">лог запуска</a>`;
         return;
+      } else if (state === 'finished') {
+        statusEl.textContent = 'Обработка завершена, забираю результат…';
       } else {
         statusEl.textContent = 'Запрос в очереди…';
       }
