@@ -80,7 +80,7 @@ async function pollResult(gh, id, statusEl, outEl) {
     }
     await new Promise(r => setTimeout(r, CONFIG.pollMs));
   }
-  statusEl.textContent = 'Не дождались ответа за 10 минут — проверьте вкладку Actions в репозитории.';
+  statusEl.textContent = 'Ответа пока нет — возможно, запрос в очереди. Загляните в «Архив» через пару минут; если и там пусто — проверьте вкладку Actions в репозитории.';
 }
 
 registerView('desk', {

@@ -29,14 +29,24 @@ registerView('archive', {
       </ul>
       <div id="session"></div>`;
 
-    el.addEventListener('click', async (e) => {
+    // Обработчик висит на списке, который пересоздаётся при каждом открытии
+    // вкладки — иначе слушатели копились бы на контейнере #view.
+    el.querySelector('.sessions').addEventListener('click', async (e) => {
       const path = e.target.dataset?.path;
       if (!path) return;
       el.querySelectorAll('.sessions button').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       const box = el.querySelector('#session');
       box.innerHTML = '<p>Загрузка…</p>';
-      const raw = await gh.getRaw(path);
+      let raw;
+      try {
+        raw = await gh.getRaw(path);
+      } catch (err) {
+        box.innerHTML = `<p class="error">${err.message === 'AUTH'
+          ? 'Токен перестал работать — перезайдите (кнопка ⎋).'
+          : 'Не удалось загрузить — проверьте сеть и кликните ещё раз.'}</p>`;
+        return;
+      }
       if (raw === null) { box.innerHTML = '<p class="error">Файл не найден.</p>'; return; }
       const parsed = parseResultJson(raw);
       const status = document.createElement('p');
